@@ -1,3 +1,3 @@
 requests==2.32.3
-bs4 
-lxml
+psycopg2
+from datetime import datetime, timedelta
