@@ -1,24 +1,27 @@
-import psycopg2
+import requests
 
+BASE_URL = "http://localhost:8000"
+
+# Получение кода станции по имени через API
 def get_station_code(name: str):
-    conn = psycopg2.connect(
-        dbname="train_tickets",
-        user="root_ticket",
-        password="root_ticket",
-        host="localhost",
-        port="5432"
-    )
-    cursor = conn.cursor()
-
-    query = "SELECT from_code FROM stations WHERE from_name = %s"
-    cursor.execute(query, (name,))
-    result = cursor.fetchone()
-
-    conn.close()
-
-    if result:
-        return result[0]
-    else:
+    url = f"{BASE_URL}/stations"
+    params = {"query": name}
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        print(f"Ошибка запроса станций: {e}")
         return None
 
-print(get_station_code("Москва"))
+    # Предположим, что API возвращает список словарей: [{"code": "MOW", "name": "Москва"}, ...]
+    codes = [station["code"] for station in data.get("stations", []) if name.lower() in station["name"].lower()]
+    return codes if codes else None
+
+
+if __name__ == "__main__":
+    from_codes = get_station_code("Москва")
+    to_codes = get_station_code("Санкт-Петербург")
+
+    print("FROM:", from_codes)
+    print("TO:", to_codes)
